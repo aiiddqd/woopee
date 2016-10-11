@@ -4,55 +4,74 @@ Plugin Name: WooCommerce Product External Extanshion
 Plugin URI: https://github.com/systemo-biz/wcpee
 Description: This is not just a plugin, it symbolizes the hope and enthusiasm of an entire generation summed up in two words sung most famously by Louis Armstrong: Hello, Dolly. When activated you will randomly see a lyric from <cite>Hello, Dolly</cite> in the upper right of your admin screen on every page.
 Author: Systemo.biz
-Version: 1.6
+Version: 1.7
 Author URI: http://systemo.biz/
 */
 
-function wcpee_change_url($url){
 
-  $post=get_post();
+
+function wpcee_add_rewrite_endpoint() {
+  add_rewrite_endpoint( $name = 'gurl', EP_PERMALINK );
+}
+add_action('init', 'wpcee_add_rewrite_endpoint');
+
+
+function wcpee_change_url($url, $product){
+
+  //$post=get_post();
+  //var_dump('sdfsdfsdfsdfsdf');
+  //var_dump($product);
 
   if(! empty($url)){
-    $url = add_query_arg( array('a' => 'go-url'));
+    //$url = add_query_arg( array('gourl' => 'go-url'));
+
+    $url = get_permalink($product->id) . 'gurl/';
   }
 
   return $url;
 
 }
-add_filter('woocommerce_product_add_to_cart_url', 'wcpee_change_url');
+add_filter('woocommerce_product_add_to_cart_url', 'wcpee_change_url', 10, 2);
+
 
 
 function wcpee_redirect_url(){
-  if(empty($_REQUEST['a'])) return;
 
-  if ( $_REQUEST['a'] == 'go-url' ) {
+  if( ! is_singular( $post_types = 'product' ))
+    return;
 
-    //Получаем исходные данные для работы
-    $post = get_post();
-    $pf = new WC_Product_Factory();
-    $product = $pf->get_product($post->ID);
-    $url = $product->get_product_url();
+  global $wp;
 
-    //Уточняем число переходов в метаполе если адрес есть и будет переход
-    if(isset($url)){
-      $count = get_post_meta($post->ID, 'wcpee_count', true);
-      if(isset($count)) {
-        $count = $count +1;
-        update_post_meta($post->ID, 'wcpee_count', $count);
-      } else {
-        update_post_meta($post->ID, 'wcpee_count', 1);
-      }
+  if( ! isset($wp->query_vars["gurl"]))
+    return;
+
+  //Получаем исходные данные для работы
+  $post = get_post();
+  //$pf = new WC_Product_Factory();
+  $product = wc_get_product();
+  $url = $product->get_product_url();
+
+  //Уточняем число переходов в метаполе если адрес есть и будет переход
+  if(isset($url)){
+    $count = get_post_meta($product->id, 'wcpee_count', true);
+    if(isset($count)) {
+      $count = $count +1;
+      update_post_meta($product->id, 'wcpee_count', $count);
+    } else {
+      update_post_meta($product->id, 'wcpee_count', 1);
     }
-
-    //Переходим по ссылке
-    wp_redirect($url, 301);
-
   }
+
+  //Переходим по ссылке
+  wp_redirect($url, 301);
+  die;
 
   return;
 
 }
 add_action( 'template_redirect', 'wcpee_redirect_url');
+
+
 
 
 //Добавляем метабокс, который показывает число переходов
