@@ -4,7 +4,7 @@ Plugin Name: WooCommerce Product External Extanshion (WooPEE)
 Plugin URI: https://github.com/systemo-biz/wcpee
 Description: This is not just a plugin, it symbolizes the hope and enthusiasm of an entire generation summed up in two words sung most famously by Louis Armstrong: Hello, Dolly. When activated you will randomly see a lyric from <cite>Hello, Dolly</cite> in the upper right of your admin screen on every page.
 Author: WPCraft
-Version: 1.8
+Version: 1.9
 Author URI: https://github.com/yumashev/
 Plugin URI: https://github.com/yumashev/woopee
 */
@@ -39,14 +39,20 @@ class WooPEE_External_Links {
   * use hook apply_filters( 'woocommerce_loop_add_to_cart_link', $url, $product);
   */
   function replace_buy_url_in_loop($url, $product){
-    return sprintf( '<a target="_blank" rel="nofollow" href="%s" data-quantity="%s" data-product_id="%s" data-product_sku="%s" class="%s">%s</a>',
-		  esc_url( $product->add_to_cart_url() ),
-		  esc_attr( isset( $quantity ) ? $quantity : 1 ),
-		  esc_attr( $product->get_id() ),
-		  esc_attr( $product->get_sku() ),
-		  esc_attr( isset( $class ) ? $class : 'button' ),
-		  esc_html( $product->add_to_cart_text() )
-	  );
+
+    // var_dump($product->product_type);
+    if('external' == $product->product_type){
+      $url = sprintf( '<a target="_blank" rel="nofollow" href="%s" data-quantity="%s" data-product_id="%s" data-product_sku="%s" class="%s">%s</a>',
+  		  esc_url( $product->add_to_cart_url() ),
+  		  esc_attr( isset( $quantity ) ? $quantity : 1 ),
+  		  esc_attr( $product->get_id() ),
+  		  esc_attr( $product->get_sku() ),
+  		  esc_attr( isset( $class ) ? $class : 'button' ),
+  		  esc_html( $product->add_to_cart_text() )
+  	  );
+
+    }
+    return $url;
   }
 
   /*
@@ -106,7 +112,7 @@ class WooPEE_External_Links {
   * Добавляем окончание для маскировки ссылки
   */
   function wcpee_change_url($url, $product){
-    if(! empty($url)){
+    if($product->product_type == 'external' and ! empty($url)){
       $url = get_permalink($product->id) . 'gurl/';
     }
     return $url;
